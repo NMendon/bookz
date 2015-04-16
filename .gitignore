@@ -1,0 +1,6 @@
+.Python
+.tox/
+bin/
+bootstrap/
+lib/
+include/
