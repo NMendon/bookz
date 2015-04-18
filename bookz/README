@@ -1,0 +1,2 @@
+The definition of the file structure in this folder is explained: http://flask.pocoo.org/docs/0.10/api/#application-object
+The static and the templlate files are placed right beside the application root.
