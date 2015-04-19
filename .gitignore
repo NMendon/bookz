@@ -5,5 +5,9 @@ bootstrap/
 lib/
 include/
 *.swp
+*.pyc
+*.swo
 pip-selfcheck.json
 share/
+.DS_Store
+.idea/*

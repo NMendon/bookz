@@ -1,0 +1,2 @@
+recursive-include bookz/templates *.html *.htm
+recursive-include bookz/static *.css *.js

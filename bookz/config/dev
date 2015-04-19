@@ -1,0 +1,5 @@
+import os
+ENV='dev'
+DEBUG='True'
+LOGGING_CONFIG_FILE='config/logging_dev.yml'
+AUTH_JSON=os.path.join(os.environ.get('HOME'),'opt/bookz/oauth.json')

@@ -1,5 +1,5 @@
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # Utility function to read the README file.
 # Used for the long_description.  It's nice, because now 1) we have a top level
@@ -16,7 +16,7 @@ setup(
     description = (" A class project"),
     license = "BSD",
     keywords = "example documentation tutorial",
-    packages=['bookz', 'bookz.tests'],
+    packages= find_packages(),
     long_description=read('README'),
     entry_points = {
 		'console_scripts':[
@@ -27,7 +27,8 @@ setup(
 
 	# Helps include the templates
 	# Use bower for the js and css component install
-	package_data={'bookz': ['templates/*.html']},
+	package_data={'bookz': [
+        'templates/*.html', 'static/css/*.css', 'static/js/*.js', 'config/*']},
 
     classifiers=[
         "Development Status :: 3 - Alpha",
