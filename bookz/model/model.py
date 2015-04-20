@@ -9,7 +9,7 @@ class Seller(Base):
 
     id = Column(Integer, Sequence('seller_id_seq'), primary_key=True, autoincrement=True)
     # TODO: keeping just the name for now. Ideally we may want this to be first and last name
-    name = Column(String(100), unique=True, nullable=False)
+    name = Column(String(100), nullable=False)
     email = Column(String(120), unique=True, nullable=False)
     posts = relationship("Post", backref="seller")
 
