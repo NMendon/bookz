@@ -74,6 +74,7 @@ def create_random_seller_entry(
     post = Post(
         seller_id=that_user.id,
         course_book_id=that_course_book.id,
+        price=random.randint(20, 200),
         comments="Test entry #%d" % (random.randint(0, 9999)))
 
     db_session.add(post)

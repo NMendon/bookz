@@ -51,13 +51,13 @@
 
      <!-- <p>Get three equal-width columns <strong>starting at desktops and scaling to large desktops</strong>. On mobile devices, tablets and below, the columns will automatically stack.</p> -->
 
-      <h2 class="sub-header">Section title</h2>
+      <h2 class="sub-header">Your Books</h2>
 
           <div class="table-responsive" class="highlight">
             <table  class="table table-hover">
               <thead>
                 <tr class="success">
-                  <th>#</th>
+                  <!--th>#</th-->
                   <th>Book Description</th>
                   <th>Author</th>
                   <th>Edition</th>
@@ -69,50 +69,19 @@
                 </tr>
               </thead>
               <tbody>
+              {% for row in results %}
                 <tr>
-                  <td>1</td>
-                  <td>Businss Analysis</td>
-                  <td>R.K. Philange</td>
-                  <td>2010</td>
-                  <td>BUS 2301</td>
-                  <td>$120</td>
-                  <td>01/27/2015 </td>
+                  <!-- row id here-->
+                  <td>{{ row['book_name']}}</td>
+                  <td>{{ row['author']}}</td>
+                  <td>{{ row['edition']}}</td>
+                  <td>{{ row['course_name']}}</td>
+                  <td>{{ '$'+row['price']}}</td>
+                  <td>{{ row['last_modified_date']}} </td>
                   <td><a href="Edit">Edit </a></td>
                   <td><a href="Delete">Delete </a></td>
                 </tr>
-                <tr>
-                  <td>2</td>
-                  <td>Businss Analysis</td>
-                  <td>R.K. Philange</td>
-                  <td>2010</td>
-                  <td>BUS 2301</td>
-                  <td>$120</td>
-                  <td>01/27/2015 </td>
-                  <td><a href="Edit">Edit </a></td>
-                  <td><a href="Delete">Delete </a></td>
-                </tr>
-                <tr>
-                  <td>3</td>
-                  <td>Businss Analysis</td>
-                  <td>R.K. Philange</td>
-                  <td>2010</td>
-                  <td>BUS 2301</td>
-                  <td>$120</td>
-                  <td>01/27/2015 </td>
-                  <td><a href="Edit">Edit </a></td>
-                  <td><a href="Delete">Delete </a></td>
-                </tr>
-                <tr>
-                  <td>4</td>
-                  <td>Businss Analysis</td>
-                  <td>R.K. Philange</td>
-                  <td>2010</td>
-                  <td>BUS 2301</td>
-                  <td>$120</td>
-                  <td>01/27/2015 </td>
-                  <td><a href="Edit">Edit </a></td>
-                  <td><a href="Delete">Delete </a></td>
-                </tr>
+              {% endfor %}
                </tbody>
             </table>
           </div>   <!-- table div -->

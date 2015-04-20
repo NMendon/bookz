@@ -75,7 +75,7 @@ def sellers_page(provider):
     oauth_config = oauth_utils.get_oauth_config_wrapper(app, provider=provider)
     oauth_token = session.get('oauth_token')
     if oauth_token is None:
-        return redirect(url_for('authorization/'+provider))
+        return redirect('authorization/'+provider)
 
     # Back here after step 3
     try:
@@ -91,19 +91,40 @@ def sellers_page(provider):
         user_info_response = google.get(oauth_config.user_info_uri)
     user_info=user_info_response.json()
 
+    seller_id = None
+
     with session_scope() as db_session:
-        this_user = Seller(seller_name=user_info['name'], email=user_info['email'])
+        this_user = Seller(name=user_info['name'], email=user_info['email'])
         that_user = db_session.query(Seller).filter_by(email=user_info['email']).first()
         if not that_user or that_user.email != user_info['email']:
             db_session.add(this_user)
             db_session.flush() # We need this ID
             _LOGGER.warn("Adding a user {} to the session".format(that_user))
+            seller_id = this_user.id
         else:
             _LOGGER.info("User already exists", that_user)
+            seller_id = that_user.id
+
+
+    results = []
+    with session_scope() as db_session:
+        res = db_session.query(Post.course_book_id, Course.name, Book.name, Book.author, Book.edition, Post.price, Post.last_modified_date).\
+            join(CourseBook, Post.course_book_id==CourseBook.id).\
+            join(Course, Course.id==CourseBook.course_id).\
+            join(Book, Book.id==CourseBook.book_id).\
+            filter(Post.seller_id==seller_id).all()
+        for _, course_name, book_name, author, edition, price, lmd in res:
+            results.append({
+                'book_name': book_name,
+                'author': author,
+                'edition': edition,
+                'course_name': course_name,
+                'price': price,
+                'last_modified_date': lmd.strftime('%m/%d/%Y')
+            })
 
     return render_template(
-        'sellers_page.html', user_info=user_info)
-
+        'sellers_page.html', user_info=user_info, results=results)
 
 ######## Utility methods to start stop a server ###########
 # Also the main tox entry point. Make sure you export these incase you are gonna start things from the outside
@@ -115,11 +136,10 @@ def start_server():
     #### Remove the above when SSL is set up####
 
     ### TODO: Abstract this ugliness using some injection mechanism
-    oauth_config = oauth_utils.get_oauth_config_wrapper(app)
     app.config.from_envvar("APP_CONFIG_FILE")
     app.run(debug=True if app.config['DEBUG'] == 'True' else False)
+    oauth_config = oauth_utils.get_oauth_config_wrapper(app, None)
     app.secret_key = oauth_config.client_secret
-    flask.g['env'] = app.config['ENV']
     # Set up logging based on what was set
     import logging
     from bookz.utils import logging_utils as lu

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Sequence, ForeignKey, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, Sequence, ForeignKey, DateTime, Boolean, Numeric
 from sqlalchemy.orm import relationship
 from bookz.model import Base
 
@@ -38,7 +38,7 @@ class Book(Base):
         self.ean = ean
 
     def __repr__(self):
-        return '<Book %d %r %r %r>' % (self.id if self.id else -1, self.name, self.author, self.edition, self.ean)
+        return '<Book %d %r %r %r, %r>' % (self.id if self.id else -1, self.name, self.author, self.edition, self.ean)
 
 class Course(Base):
     __tablename__ = 'course'
@@ -83,18 +83,23 @@ class Post(Base):
     course_book_id = Column(Integer, ForeignKey('course_book.id'), nullable=False)
     comments = Column(String(500))
     created_date = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
+    price = Column(Numeric, nullable=False)
     # TODO: Change field in original model
     is_sold = Boolean(name='is_sold_constraint')
+    last_modified_date = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
 
-    def __init__(self, seller_id=None, course_book_id=None, comments=None, created_date=None):
+    def __init__(self, seller_id=None, course_book_id=None, comments=None, price=None,
+                 created_date=None, last_modified_date=None):
         self.seller_id = seller_id
         self.course_book_id = course_book_id
         self.comments = comments
         self.created_date = created_date
+        self.price = price
+        self.last_modified_date = last_modified_date
 
     def __repr__(self):
-        return '<Post %d %d %d %r %r>' % (
+        return '<Post %d %d %s %d %r %r>' % (
             self.id or -1, self.seller_id or -1,
-            self.course_book_id or -1,
+            self.course_book_id or -1, self.price,
             self.comments or '', self.created_date or '')
 
