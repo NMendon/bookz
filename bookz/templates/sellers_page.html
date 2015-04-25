@@ -78,8 +78,8 @@
                   <td>{{ row['course_name']}}</td>
                   <td>{{ row['price']}}</td>
                   <td>{{ row['last_modified_date']}} </td>
-                  <td><a href="Edit">Edit </a></td>
-                  <td><a href="Delete">Delete </a></td>
+                  <td><a href="/seller/{{ provider }}/add_book">Edit </a></td>
+                  <td><a href="/seller/{{ provider }}/delete_book">Delete </a></td>
                 </tr>
               {% endfor %}
                </tbody>
