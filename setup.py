@@ -21,7 +21,8 @@ setup(
     entry_points = {
 		'console_scripts':[
 			'start_server =  bookz.app:start_server',
-			'stop_server = bookz.app:stop_server'
+			'stop_server = bookz.app:stop_server',
+            'create_post_entry = bookz.bin.create_post_entry:create_post_entry'
 		]
 	},
 

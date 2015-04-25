@@ -1,5 +1,4 @@
 from flask import Flask, request, render_template, session, redirect, url_for
-import flask
 from requests_oauthlib import OAuth2Session
 import requests
 
@@ -66,7 +65,7 @@ def authorized(provider):
     session['oauth_token'] = token
     return redirect('seller_page/'+provider)
 
-
+# Step 3
 @app.route('/seller_page/<provider>')
 def sellers_page(provider):
     # If we already have the access token we can fetch resources.
@@ -158,14 +157,6 @@ def stop_server():
             'http://127.0.0.1:5000/shutdown')
     except requests.exceptions.ConnectionError as e:
         print 'Not detecting a started server..'
-
-######### For database session to be removed when the application shuts down. #########
-from bookz.model import db_session
-
-
-@app.teardown_appcontext
-def shutdown_session(exception=None):
-    db_session.remove()
 
 
 if '__main__' in __name__:

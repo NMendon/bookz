@@ -13,8 +13,8 @@ session_scope = _session_scope_wrapper(engine)
 Base = declarative_base()
 
 # Hmm not sure why these 2 lines are needed when I copied it
-with session_scope() as db_session:
-    Base.query = db_session.query_property()
+with session_scope() as _db_session:
+    Base.query = _db_session.query_property()
 
 
 def init_db():
