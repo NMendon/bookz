@@ -3,15 +3,7 @@
 {% block head %}
     {{ super() }}
     <link href="{{ url_for('static', filename='css/login.css') }}" rel="stylesheet">
-    <style type="text/css">
-        .important { color: #336699; }
-    body {
-        min-height: 2000px;
-    }
-    .navbar-static-top {
-         margin-bottom: 19px;
-    }
-    </style>
+    <script src="{{ url_for('static', filename='js/seller.js') }}"></script>
 
 {% endblock %}
 {% block content %}
@@ -76,10 +68,10 @@
                   <td>{{ row['author']}}</td>
                   <td>{{ row['edition']}}</td>
                   <td>{{ row['course_name']}}</td>
-                  <td>{{ row['price']}}</td>
+                  <td>{{ row['price']|round(precision=2)}}</td>
                   <td>{{ row['last_modified_date']}} </td>
-                  <td><a href="/seller/{{ provider }}/add_book">Edit </a></td>
-                  <td><a href="/seller/{{ provider }}/delete_book">Delete </a></td>
+                  <td><a href="/seller/edit_book">Edit </a></td>
+                  <td><a href="/seller/delete_book">Delete </a></td>
                 </tr>
               {% endfor %}
                </tbody>
@@ -98,7 +90,7 @@
 
      <hr>
 
-    <h3>Click <a href="http://getbootstrap.com/css/#grid-responsive-resets">here </a>to add a new listing</h3>
+    <h3>Click <a href="/seller/add_book">here </a>to add a new listing</h3>
 
 
     </div> <!-- /container -->

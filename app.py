@@ -1,13 +1,16 @@
-from flask import Flask, request, render_template, session, redirect, url_for
+from bookz.utils.forms import BookForm
+from flask import Flask, request, render_template, session, redirect, flash
 from requests_oauthlib import OAuth2Session
 import requests
+import datetime as dt
 
 from bookz.utils import oauth_utils
 from bookz.model import session_scope
 from bookz.model.model import Book, Course, CourseBook, Post, Seller
 
-app = Flask(__name__) #, template_folder='bookz/templates')
+app = Flask(__name__, template_folder='bookz/templates', static_folder="bookz/static")
 import os
+import json
 
 import logging
 _LOGGER = logging.getLogger(__name__)
@@ -65,7 +68,7 @@ def authorized(provider):
     session['oauth_token'] = token
     return redirect('seller_page/'+provider)
 
-# Step 3
+
 @app.route('/seller_page/<provider>')
 def sellers_page(provider):
     # If we already have the access token we can fetch resources.
@@ -75,7 +78,9 @@ def sellers_page(provider):
     oauth_token = session.get('oauth_token')
     if oauth_token is None:
         return redirect('authorization/'+provider)
-
+    # We use this provider everywhere to get the oauth token
+    # Perhaps we should encapsulate it?
+    session['provider'] = provider
     # Back here after step 3
     try:
         # TODO: Need this to be based on the type of provider
@@ -101,10 +106,10 @@ def sellers_page(provider):
             _LOGGER.warn("Adding a user {} to the session".format(that_user))
             seller_id = this_user.id
         else:
-            _LOGGER.info("User already exists", that_user)
+            _LOGGER.info("User already exists %s" % that_user)
             seller_id = that_user.id
 
-
+    session['seller_id'] = seller_id
     results = []
     with session_scope() as db_session:
         res = db_session.query(Post.course_book_id, Course.name, Book.name, Book.author, Book.edition, Post.price, Post.last_modified_date).\
@@ -123,7 +128,88 @@ def sellers_page(provider):
             })
 
     return render_template(
-        'sellers_page.html', user_info=user_info, results=results)
+        'sellers_page.html', user_info=user_info, results=results, provider=provider)
+
+@app.route('/seller/add_book', methods=["GET", "POST"])
+def add_book():
+    oauth_token = session.get('oauth_token')
+    if oauth_token is None or not session.get('seller_id', None):
+        return redirect('authorization/' + session['provider'])
+    # Else return the page with the list of courses loaded in
+    if request.method == "POST":
+        if not request.form:
+            raise ValueError("Expected a form in the request")
+        else:
+            _LOGGER.info(request.form)
+            form = BookForm(request.form)
+            if form.validate():
+                book = Book(
+                    edition=form.edition, name=form.book, author=form.author,
+                    comments=form.comments, ean=form.ean)
+                with session_scope() as db_session:
+                    cbid = db_session.query(CourseBook.id) \
+                        .filter(CourseBook.course_id==int(form.course.data)) \
+                        .filter(CourseBook.book_id==int(form.book.data)).all()
+                    if cbid and cbid[0]:
+                        post = Post(seller_id=session.get('seller_id'),
+                             course_book_id=cbid[0][0], comments=form.comments.data, price=form.price.data,
+                             created_date=dt.datetime.utcnow(), last_modified_date=dt.datetime.utcnow())
+                        db_session.add(post)
+                        flash('Adding a post...%s' % post)
+                        _LOGGER.info(cbid)
+                        _LOGGER.info(post)
+                    else:
+                        raise ValueError(
+                            "Uh oh.. cbid not found for course_id = %s book_id = %s" %(
+                            form.course.data, form.book.data))
+                return redirect('/seller_page/' + session['provider'])
+            else:
+                _LOGGER.info("Could not validate form %s" %(form.errors))
+                return render_template('add_book.html', form=form)
+    elif request.method == "GET":
+        return render_template('add_book.html')
+
+@app.route('/courses/get_courses', methods=['GET'])
+def fetch_courses():
+    oauth_token = session.get('oauth_token')
+    if oauth_token is None:
+        return redirect('authorization/' + session['provider'])
+    if not session.get('courses', None):
+        courses = []
+        with session_scope() as db_session:
+            res = db_session.query(Course.id, Course.name, Course.desc)
+            for _id, name, desc in res:
+                courses.append({"id": _id, "name": name, "desc": desc})
+        session['courses'] = courses
+    else:
+        return json.dumps(session.get('courses'))
+
+@app.route('/courses/get_books', methods=["GET"])
+def fetch_course_books():
+    app.logger.info(request)
+    oauth_token = session.get('oauth_token')
+    if oauth_token is None:
+        return redirect('authorization/' + session['provider'])
+    if not session.get('courses', None):
+        raise ValueError('Looks like you navigated to this route before calling /seller/add_book')
+    # Now get the books
+    results = []
+    with session_scope() as db_session:
+        res = db_session.query(
+            Book.id, Book.name, Book.author, Book.ean, Book.edition).join(
+                CourseBook).filter(CourseBook.course_id == request.args.get('course')).all()
+        for book_id, name, author, ean, edition in res:
+            results.append({
+                "id": book_id,
+                "name": name,
+                "author": author,
+                "ean": ean,
+                "edition": edition
+            })
+
+    return json.dumps(results)
+
+
 
 ######## Utility methods to start stop a server ###########
 # Also the main tox entry point. Make sure you export these incase you are gonna start things from the outside
@@ -136,19 +222,21 @@ def start_server():
 
     ### TODO: Abstract this ugliness using some injection mechanism
     app.config.from_envvar("APP_CONFIG_FILE")
-    app.run(debug=True if app.config['DEBUG'] == 'True' else False)
-    oauth_config = oauth_utils.get_oauth_config_wrapper(app, None)
+    # TODO: Use google's secret key.. for now..
+    oauth_config = oauth_utils.get_oauth_config_wrapper(app, "google")
     app.secret_key = oauth_config.client_secret
+    app.config['SECRET_KEY']  = oauth_config.client_secret
+    app.config['SESSION_TYPE'] = 'filesystem'
     # Set up logging based on what was set
     import logging
     from bookz.utils import logging_utils as lu
-    if app.config['LOGGING_CONFIG_FILE']:
-        lu.setup_logging( app.config['LOGGING_CONFIG_FILE'])
-        global _LOGGER
-        _LOGGER = logging.getLogger(__name__)
-    else:
-        raise ValueError("Did not find LOGGING_CONFIG_FILE in the app config")
-
+    #if app.config['LOGGING_CONFIG_FILE']:
+    #    lu.setup_logging(app.config['LOGGING_CONFIG_FILE'])
+    global _LOGGER
+    _LOGGER = app.logger
+    #else:
+    #    raise ValueError("Did not find LOGGING_CONFIG_FILE in the app config")
+    app.run(debug=True if app.config['DEBUG'] == 'True' else False)
 
 # TODO: get the server port and append it instead of hardcoding it...
 def stop_server():
@@ -157,7 +245,6 @@ def stop_server():
             'http://127.0.0.1:5000/shutdown')
     except requests.exceptions.ConnectionError as e:
         print 'Not detecting a started server..'
-
 
 if '__main__' in __name__:
     start_server()

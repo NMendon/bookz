@@ -11,3 +11,9 @@ pip-selfcheck.json
 share/
 .DS_Store
 .idea/*
+
+an_example_pypi_project.egg-info/
+bookz/static/components/*
+dist/
+node_modules/
+oauth.json

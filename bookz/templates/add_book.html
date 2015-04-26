@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Index{% endblock %}
+{% block head %}
+    {{ super() }}
+    <link href="{{ url_for('static', filename='css/login.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename='js/seller.js') }}"></script>
+    <script src="{{ url_for(
+        'static', filename='components/jquery-cascading-dropdown/dist/jquery.cascadingdropdown.js') }}"></script>
+{% endblock %}
+{% block content %}
+
+     <form class="form-horizontal" role="form", id="dd" action="" method="post">
+
+        <h2>Add a New Post</h2>
+        <p> Enter the below details and then click on submit </p>
+
+        <hr>
+
+      <!-- Course ID -->
+         <div class="form-group">
+              <label class="control-label col-sm-2">Course ID: </label>
+           <div class="col-sm-2">
+                <select id="course" class="form-control course" name="course">
+                    <option value>Select Value</option>
+                </select>
+           </div>
+         </div>
+
+      <!-- Book Name  -->
+         <div class="form-group">
+              <label class="control-label col-sm-2">Book Name: </label>
+           <div class="col-sm-7">
+                <select id="book" class="form-control book" name="book">
+                    <option value=''>Select</option>
+                </select>
+           </div>
+         </div>
+
+       <!-- Author Name -->
+         <div class="form-group">
+              <label class="control-label col-sm-2">Author Name: </label>
+           <div class="col-sm-4">
+                <select id="author" class="form-control author" name="author">
+                    <option value=''>Select</option>
+
+                </select>
+           </div>
+         </div>
+
+
+       <!-- Edition -->
+         <div class="form-group">
+              <label class="control-label col-sm-2">Edition: </label>
+           <div class="col-sm-2">
+                <select id="edition" class="form-control edition" name="edition">
+                    <option value=''>Select</option>
+                </select>
+           </div>
+         </div>
+
+         <div class="form-group">
+              <label class="control-label col-sm-2">Price (in $): </label>
+           <div class="col-sm-2">
+              <input type="number" class="form-control" id="price" placeholder="0.00" name="price" step="any" min="0">
+           </div>
+         </div>
+
+
+         <div class="form-group">
+              <label class="control-label col-sm-2">Comments: </label>
+           <div class="col-sm-5">
+              <textarea class="form-control" rows="4" id="comment"></textarea>
+           </div>
+         </div>
+
+
+         <div class="form-group">
+
+           <div class="col-sm-offset-4 col-sm-2">
+              <button type="submit" class="btn" value=Book>Submit</button>
+           </div>
+         </div>
+
+
+      </form>
+
+{% endblock %}

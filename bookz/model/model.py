@@ -29,13 +29,15 @@ class Book(Base):
     name = Column(String(100), nullable=False)
     author = Column(String(100), nullable=False)
     edition = Column(String(100))
+    comments = Column(String(200))
     # Note the default
     ean = Column(Integer, default=-1)
-    def __init__(self, name=None, author=None, edition=None, ean=None):
+    def __init__(self, name=None, author=None, edition=None, ean=None, comments=None):
         self.name = name
         self.author = author
         self.edition = edition
         self.ean = ean
+        self.comments = comments
 
     def __repr__(self):
         return '<Book %d %r %r %r, %r>' % (self.id if self.id else -1, self.name, self.author, self.edition, self.ean)

@@ -19,7 +19,6 @@ def get_oauth_config_wrapper(app, provider):
         auth = json.load(f)[provider]
         # This is necessary to secure the cookies so users can't see/modify them
         # http://flask.pocoo.org/docs/0.10/quickstart/#sessions
-        app.secret_key = auth['client_secret']
         google_oauth_obj = oath_object(
             provider='Generic provider 'if not provider else provider,
             client_id=auth['client_id'],
