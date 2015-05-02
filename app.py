@@ -112,13 +112,14 @@ def sellers_page(provider):
     session['seller_id'] = seller_id
     results = []
     with session_scope() as db_session:
-        res = db_session.query(Post.course_book_id, Course.name, Book.name, Book.author, Book.edition, Post.price, Post.last_modified_date).\
+        res = db_session.query(Post.id,  Course.name, Book.name, Book.author, Book.edition, Post.price, Post.last_modified_date).\
             join(CourseBook, Post.course_book_id==CourseBook.id).\
             join(Course, Course.id==CourseBook.course_id).\
             join(Book, Book.id==CourseBook.book_id).\
             filter(Post.seller_id==seller_id).all()
-        for _, course_name, book_name, author, edition, price, lmd in res:
+        for post_id, course_name, book_name, author, edition, price, lmd in res:
             results.append({
+                'post_id': post_id,
                 'book_name': book_name,
                 'author': author,
                 'edition': edition,
@@ -139,33 +140,30 @@ def add_book():
     if request.method == "POST":
         if not request.form:
             raise ValueError("Expected a form in the request")
+        _LOGGER.info(request.form)
+        form = BookForm(request.form)
+        if form.validate():
+            with session_scope() as db_session:
+                cbid = db_session.query(CourseBook.id) \
+                    .filter(CourseBook.course_id==int(form.course.data)) \
+                    .filter(CourseBook.book_id==int(form.book.data)).all()
+                if cbid and cbid[0]:
+                    post = Post(
+                        seller_id=session.get('seller_id'),
+                        course_book_id=cbid[0][0], comments=form.comments.data, price=form.price.data,
+                        created_date=dt.datetime.utcnow(), last_modified_date=dt.datetime.utcnow())
+                    db_session.add(post)
+                    flash('Adding a post...%s' % post)
+                    _LOGGER.info(cbid)
+                    _LOGGER.info(post)
+                else:
+                    raise ValueError(
+                        "Uh oh.. cbid not found for course_id = %s book_id = %s" %(
+                        form.course.data, form.book.data))
+            return redirect('/seller_page/' + session['provider'])
         else:
-            _LOGGER.info(request.form)
-            form = BookForm(request.form)
-            if form.validate():
-                book = Book(
-                    edition=form.edition, name=form.book, author=form.author,
-                    comments=form.comments, ean=form.ean)
-                with session_scope() as db_session:
-                    cbid = db_session.query(CourseBook.id) \
-                        .filter(CourseBook.course_id==int(form.course.data)) \
-                        .filter(CourseBook.book_id==int(form.book.data)).all()
-                    if cbid and cbid[0]:
-                        post = Post(seller_id=session.get('seller_id'),
-                             course_book_id=cbid[0][0], comments=form.comments.data, price=form.price.data,
-                             created_date=dt.datetime.utcnow(), last_modified_date=dt.datetime.utcnow())
-                        db_session.add(post)
-                        flash('Adding a post...%s' % post)
-                        _LOGGER.info(cbid)
-                        _LOGGER.info(post)
-                    else:
-                        raise ValueError(
-                            "Uh oh.. cbid not found for course_id = %s book_id = %s" %(
-                            form.course.data, form.book.data))
-                return redirect('/seller_page/' + session['provider'])
-            else:
-                _LOGGER.info("Could not validate form %s" %(form.errors))
-                return render_template('add_book.html', form=form)
+            _LOGGER.info("Could not validate form %s" %(form.errors))
+            return render_template('add_book.html', form=form)
     elif request.method == "GET":
         return render_template('add_book.html')
 
@@ -181,8 +179,7 @@ def fetch_courses():
             for _id, name, desc in res:
                 courses.append({"id": _id, "name": name, "desc": desc})
         session['courses'] = courses
-    else:
-        return json.dumps(session.get('courses'))
+    return json.dumps(session.get('courses'))
 
 @app.route('/courses/get_books', methods=["GET"])
 def fetch_course_books():
@@ -209,6 +206,47 @@ def fetch_course_books():
 
     return json.dumps(results)
 
+@app.route('/seller_page/edit_post/<post_id>', methods=["GET"])
+def edit_post(post_id):
+    """
+    Based on the post_id and the seller_id we update the post
+    :param post_id:
+    :return:
+    """
+    oauth_token = session.get('oauth_token')
+    session_id = session.get('seller_id', None)
+    if oauth_token is None or not session_id:
+        return redirect('authorization/' + session['provider'])
+    with session_scope() as db_session:
+        res = db_session.query(
+                CourseBook.course_id, Course.name.label('course_name'), CourseBook.book_id,
+                Book.name.label('book_name'), Book.author,
+                Book.ean, Book.edition, Post.comments, Post.price).\
+            join(Course, Course.id==CourseBook.course_id).\
+            join(Post, Post.course_book_id==CourseBook.id).\
+            join(Book, Book.id==CourseBook.book_id).\
+            filter(Post.id == post_id).\
+            filter(Post.seller_id == session_id).\
+            all()
+        if res and res[0]:
+            _LOGGER.info(res[0])
+            return render_template('edit_post.html', post={
+                'book': {
+                    'id': res[0].book_id,
+                    'name': res[0].book_name
+                },
+                'course': {
+                    'id': res[0].course_id,
+                    'name': res[0].course_name
+                },
+                'author': res[0].author,
+                'edition': res[0].edition,
+                'price': res[0].price,
+                'comments': res[0].comments
+            })
+
+        else:
+            return redirect('seller_page'+session['provider'])
 
 
 ######## Utility methods to start stop a server ###########

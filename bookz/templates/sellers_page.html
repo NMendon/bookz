@@ -70,8 +70,8 @@
                   <td>{{ row['course_name']}}</td>
                   <td>{{ row['price']|round(precision=2)}}</td>
                   <td>{{ row['last_modified_date']}} </td>
-                  <td><a href="/seller/edit_book">Edit </a></td>
-                  <td><a href="/seller/delete_book">Delete </a></td>
+                  <td><a href="/seller_page/edit_post/{{ row['post_id'] }}">Edit </a></td>
+                  <td><a href="/seller_page/delete_book/{{ row['post_id'] }}">Delete </a></td>
                 </tr>
               {% endfor %}
                </tbody>

@@ -87,7 +87,7 @@ class Post(Base):
     created_date = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
     price = Column(Numeric, nullable=False)
     # TODO: Change field in original model
-    is_sold = Boolean(name='is_sold_constraint')
+    status = Column(String(1), default='N')
     last_modified_date = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
 
     def __init__(self, seller_id=None, course_book_id=None, comments=None, price=None,
