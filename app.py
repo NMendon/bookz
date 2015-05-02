@@ -242,7 +242,8 @@ def edit_post(post_id):
                 'author': res[0].author,
                 'edition': res[0].edition,
                 'price': res[0].price,
-                'comments': res[0].comments
+                'comments': res[0].comments,
+                'provider': session['provider']
             })
 
         else:
