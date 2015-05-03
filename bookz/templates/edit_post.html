@@ -3,25 +3,33 @@
 {% block head %}
     {{ super() }}
     <link href="{{ url_for('static', filename='css/login.css') }}" rel="stylesheet">
+    <script src="{{ url_for('static', filename="js/edit.js") }}"></script>
     <script src="{{ url_for(
         'static', filename='components/jquery-cascading-dropdown/dist/jquery.cascadingdropdown.js') }}"></script>
 {% endblock %}
 {% block content %}
-
-     <form class="form-horizontal" role="form", id="dd" action="/edit" method="post">
+     {% macro has_error(key) -%}
+         {% if key in form_errors %} has-error {% endif %}
+     {%- endmacro %}
+     {% macro display_error(key) -%}
+        {% if key in form_errors %}
+            <label class="control-label" for="{{ key }}">{{ form_errors[key][0] }} </label>
+        {% endif %}
+     {%- endmacro %}
+     <form class="form-horizontal" role="form", id="dd" action="/seller_page/edit_post/{{ post['post_id'] }}" method="post">
 
         <h2>Add a New Post</h2>
         <p> Enter the below details and then click on submit </p>
 
         <hr>
 
+     <fieldset disabled>
       <!-- Course ID -->
          <div class="form-group">
               <label class="control-label col-sm-2">Course ID: </label>
            <div class="col-sm-2">
                 <select id="course" class="form-control course" name="course">
-                    <option value="{{ post['course']['id'] }}" selected>{{ post['course']['name'] }}</option>
-                    {{   post |pprint }}
+                    <option value="{{ post['course']['id'] }}" selected="selected">{{ post['course']['name'] }}</option>
                 </select>
            </div>
          </div>
@@ -37,40 +45,41 @@
          </div>
 
        <!-- Author Name -->
-         <div class="form-group">
-              <label class="control-label col-sm-2">Author Name: </label>
-           <div class="col-sm-4">
-                <select id="author" class="form-control author" name="author">
-                    <option value="{{ post['author'] }}" selected>{{ post['author'] }}</option>
-
-                </select>
-           </div>
-         </div>
+             <div class="form-group">
+                  <label class="control-label col-sm-2">Author Name: </label>
+               <div class="col-sm-4">
+                    <select id="author" class="form-control author" name="author" >
+                        <option value="{{ post['author'] }}" selected >{{ post['author'] }}</option>
+                    </select>
+               </div>
+             </div>
 
 
        <!-- Edition -->
-         <div class="form-group">
-              <label class="control-label col-sm-2">Edition: </label>
-           <div class="col-sm-2">
-                <select id="edition" class="form-control edition" name="edition">
-                    <option value="{{ post['edition'] }}" selected>{{ post['edition'] }}</option>
-                </select>
-           </div>
-         </div>
+             <div class="form-group">
+                  <label class="control-label col-sm-2">Edition: </label>
+               <div class="col-sm-2">
+                    <select id="edition" class="form-control" name="edition">
+                        <option value="{{ post['edition'] }}" selected>{{ post['edition'] }}</option>
+                    </select>
+               </div>
+             </div>
+     </fieldset>
 
          <div class="form-group">
               <label class="control-label col-sm-2">Price (in $): </label>
-           <div class="col-sm-2">
-              <input type="number" class="form-control" id="price" placeholder="{{ post['price']|round(precision=2) }}"
-                     name="price" step="any" min="0">
-
+           <div class="col-sm-2 {{ has_error('price') }}">
+              {{ display_error('price') }}
+              <input type="number" class="form-control" id="price" value="{{ post['price']|round(precision=2) }}"
+                     name="price" step="any" min="0" autofocus>
            </div>
          </div>
 
 
          <div class="form-group">
               <label class="control-label col-sm-2">Comments: </label>
-           <div class="col-sm-5">
+           <div class="col-sm-5 {{ has_error('comments') }}">
+               {{ display_error('comments') }}
               <textarea class="form-control" rows="4" id="comment">{{ post['comments'] }}</textarea>
            </div>
          </div>
@@ -80,7 +89,7 @@
 
            <div class="col-sm-offset-4 col-sm-2">
               <button type="submit" class="btn" value=Book>Submit</button>
-              <a role="button" class="btn btn-default" value="/seller_page/{{ post['provider'] }}">Cancel</a>
+              <a role="button" class="btn btn-default" href="/seller_page/{{ post['provider'] }}">Cancel</a>
            </div>
          </div>
 

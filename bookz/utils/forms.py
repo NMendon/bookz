@@ -1,5 +1,5 @@
 from wtforms import Form, BooleanField, TextField, PasswordField, validators, StringField
-from wtforms.fields.core import IntegerField
+from wtforms.fields.core import IntegerField, DecimalField
 
 
 class BookForm(Form):
@@ -7,6 +7,7 @@ class BookForm(Form):
     book = StringField('Book Name', [validators.DataRequired()])
     author = StringField('Author Name', [validators.DataRequired()])
     edition = StringField('Edition', [validators.DataRequired()])
-    price = IntegerField('Price', [validators.NumberRange(0), validators.DataRequired()])
+    price = DecimalField('Price', [
+        validators.NumberRange(0, message="Must be an >= 0")])
     comments = StringField('Comments', [validators.Length(max=150)])
     ean = StringField("ean")

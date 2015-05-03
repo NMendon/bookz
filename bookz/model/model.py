@@ -87,21 +87,23 @@ class Post(Base):
     created_date = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
     price = Column(Numeric, nullable=False)
     # TODO: Change field in original model
-    status = Column(String(1), default='N')
+    status = Column(String(1), default='A')
     last_modified_date = Column(DateTime(timezone=True), default=datetime.datetime.utcnow)
 
     def __init__(self, seller_id=None, course_book_id=None, comments=None, price=None,
-                 created_date=None, last_modified_date=None):
+                 created_date=None, status = 'A', last_modified_date=None):
         self.seller_id = seller_id
         self.course_book_id = course_book_id
         self.comments = comments
         self.created_date = created_date
         self.price = price
+        self.status = status
         self.last_modified_date = last_modified_date
 
     def __repr__(self):
-        return '<Post %d %d %s %d %r %r>' % (
+        return '<Post %d %d %d %s %r %d %s %r>' % (
             self.id or -1, self.seller_id or -1,
-            self.course_book_id or -1, self.price,
-            self.comments or '', self.created_date or '')
+            self.course_book_id or -1,
+            self.comments or '', self.created_date or '',
+            self.price, self.status, self.last_modified_date)
 

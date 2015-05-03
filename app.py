@@ -7,6 +7,7 @@ import datetime as dt
 from bookz.utils import oauth_utils
 from bookz.model import session_scope
 from bookz.model.model import Book, Course, CourseBook, Post, Seller
+from bookz.model import dal
 
 app = Flask(__name__, template_folder='bookz/templates', static_folder="bookz/static")
 import os
@@ -116,7 +117,8 @@ def sellers_page(provider):
             join(CourseBook, Post.course_book_id==CourseBook.id).\
             join(Course, Course.id==CourseBook.course_id).\
             join(Book, Book.id==CourseBook.book_id).\
-            filter(Post.seller_id==seller_id).all()
+            filter(Post.seller_id==seller_id).\
+            filter(Post.status == 'A').all()
         for post_id, course_name, book_name, author, edition, price, lmd in res:
             results.append({
                 'post_id': post_id,
@@ -153,17 +155,14 @@ def add_book():
                         course_book_id=cbid[0][0], comments=form.comments.data, price=form.price.data,
                         created_date=dt.datetime.utcnow(), last_modified_date=dt.datetime.utcnow())
                     db_session.add(post)
-                    flash('Adding a post...%s' % post)
-                    _LOGGER.info(cbid)
-                    _LOGGER.info(post)
                 else:
                     raise ValueError(
                         "Uh oh.. cbid not found for course_id = %s book_id = %s" %(
                         form.course.data, form.book.data))
             return redirect('/seller_page/' + session['provider'])
         else:
-            _LOGGER.info("Could not validate form %s" %(form.errors))
-            return render_template('add_book.html', form=form)
+            _LOGGER.warn("Errors: %s " % form.errors)
+            return render_template('add_book.html', form=form, form_errors=form.errors)
     elif request.method == "GET":
         return render_template('add_book.html')
 
@@ -206,7 +205,16 @@ def fetch_course_books():
 
     return json.dumps(results)
 
-@app.route('/seller_page/edit_post/<post_id>', methods=["GET"])
+@app.route('/seller_page/delete_post/<post_id>', methods=["GET", "POST"])
+def delete_post(post_id):
+    oauth_token = session.get('oauth_token')
+    seller_id = session.get('seller_id', None)
+    if oauth_token is None or not seller_id:
+        return redirect('authorization/' + session['provider'])
+    dal.deactivate_post_from_id(post_id, seller_id)
+    return redirect('seller_page/' + session['provider'])
+
+@app.route('/seller_page/edit_post/<post_id>', methods=["GET", "POST"])
 def edit_post(post_id):
     """
     Based on the post_id and the seller_id we update the post
@@ -217,37 +225,53 @@ def edit_post(post_id):
     session_id = session.get('seller_id', None)
     if oauth_token is None or not session_id:
         return redirect('authorization/' + session['provider'])
-    with session_scope() as db_session:
-        res = db_session.query(
-                CourseBook.course_id, Course.name.label('course_name'), CourseBook.book_id,
-                Book.name.label('book_name'), Book.author,
-                Book.ean, Book.edition, Post.comments, Post.price).\
-            join(Course, Course.id==CourseBook.course_id).\
-            join(Post, Post.course_book_id==CourseBook.id).\
-            join(Book, Book.id==CourseBook.book_id).\
-            filter(Post.id == post_id).\
-            filter(Post.seller_id == session_id).\
-            all()
-        if res and res[0]:
-            _LOGGER.info(res[0])
-            return render_template('edit_post.html', post={
-                'book': {
-                    'id': res[0].book_id,
-                    'name': res[0].book_name
-                },
-                'course': {
-                    'id': res[0].course_id,
-                    'name': res[0].course_name
-                },
-                'author': res[0].author,
-                'edition': res[0].edition,
-                'price': res[0].price,
-                'comments': res[0].comments,
-                'provider': session['provider']
-            })
+    if request.method == "GET":
+        with session_scope() as db_session:
+            res = db_session.query(
+                    CourseBook.course_id, Course.name.label('course_name'), CourseBook.book_id,
+                    Book.name.label('book_name'), Book.author,
+                    Book.ean, Book.edition, Post.comments, Post.price).\
+                join(Course, Course.id==CourseBook.course_id).\
+                join(Post, Post.course_book_id==CourseBook.id).\
+                join(Book, Book.id==CourseBook.book_id).\
+                filter(Post.id == post_id).\
+                filter(Post.seller_id == session_id).\
+                all()
+            if res and res[0]:
+                _LOGGER.info(res[0])
+                return render_template('edit_post.html', post={
+                    'post_id': post_id,
+                    'book': {
+                        'id': res[0].book_id,
+                        'name': res[0].book_name
+                    },
+                    'course': {
+                        'id': res[0].course_id,
+                        'name': res[0].course_name
+                    },
+                    'author': res[0].author,
+                    'edition': res[0].edition,
+                    'price': res[0].price,
+                    'comments': res[0].comments,
+                    'provider': session['provider']
+                })
 
-        else:
-            return redirect('seller_page'+session['provider'])
+            else:
+                return redirect('seller_page'+session['provider'])
+    elif request.method == "POST":
+        if not request.form:
+            raise ValueError("Expected a form in the request")
+        form = BookForm(request.form)
+        if form.validate():
+            dal.update_post_from_id(
+                post_id, session['seller_id'], price=form.price.data,
+                book_id=form.book.data, course_id=form.course.data, comments=form.comments.data)
+        elif 'price' in form.errors and len(form.errors) == 1:
+            # The price was incorrect
+            flash('%s (Price)' % form.errors['price'][0])
+            _LOGGER.info("Could not validate form %s" % form.errors)
+        # TODO: display an error message instead?
+        return redirect('seller_page/' + session['provider'])
 
 
 ######## Utility methods to start stop a server ###########

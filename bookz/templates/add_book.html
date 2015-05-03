@@ -9,6 +9,14 @@
 {% endblock %}
 {% block content %}
 
+     {% macro has_error(key) -%}
+         {% if key in form_errors %} has-error {% endif %}
+     {%- endmacro %}
+     {% macro display_error(key) -%}
+         {% if key in form_errors %}
+             <label class="control-label" for="{{ key }}">{{ form_errors[key][0] }} </label>
+         {% endif %}
+     {%- endmacro %}
      <form class="form-horizontal" role="form", id="dd" action="" method="post">
 
         <h2>Add a New Post</h2>
@@ -19,7 +27,8 @@
       <!-- Course ID -->
          <div class="form-group">
               <label class="control-label col-sm-2">Course ID: </label>
-           <div class="col-sm-2">
+           <div class="col-sm-2 {{ has_error('course') }} }">
+               {{ display_error('course') }}
                 <select id="course" class="form-control course" name="course">
                     <option value>Select Value</option>
                 </select>
@@ -29,7 +38,8 @@
       <!-- Book Name  -->
          <div class="form-group">
               <label class="control-label col-sm-2">Book Name: </label>
-           <div class="col-sm-7">
+           <div class="col-sm-7 {{ has_error('book') }}">
+               {{ display_error('book') }}
                 <select id="book" class="form-control book" name="book">
                     <option value=''>Select</option>
                 </select>
@@ -39,7 +49,8 @@
        <!-- Author Name -->
          <div class="form-group">
               <label class="control-label col-sm-2">Author Name: </label>
-           <div class="col-sm-4">
+           <div class="col-sm-4 {{ has_error('author') }}">
+               {{ display_error('author') }}
                 <select id="author" class="form-control author" name="author">
                     <option value=''>Select</option>
 
@@ -51,7 +62,8 @@
        <!-- Edition -->
          <div class="form-group">
               <label class="control-label col-sm-2">Edition: </label>
-           <div class="col-sm-2">
+           <div class="col-sm-2 {{ has_error('author') }}">
+               {{ display_error('author') }}
                 <select id="edition" class="form-control edition" name="edition">
                     <option value=''>Select</option>
                 </select>
@@ -60,7 +72,8 @@
 
          <div class="form-group">
               <label class="control-label col-sm-2">Price (in $): </label>
-           <div class="col-sm-2">
+           <div class="col-sm-2 {{ has_error('price') }}">
+               {{ display_error('price') }}
               <input type="number" class="form-control" id="price" placeholder="0.00" name="price" step="any" min="0">
            </div>
          </div>
