@@ -27,7 +27,7 @@
       </div>
     </nav>
     <div class="container">
-
+    {% if results %}
       <div class="page-header">
         <h1>Books you can buy!</h1>
         <p class="lead">You can contact the seller for any of the books listed below</p>
@@ -76,8 +76,14 @@
         <div class="col-md-1"><strong>Edit/Delete</strong></div>
       </div>
     -->
-     
-     <hr>
+         <hr>
+     {% else %}
+         <div class="page-header">
+            <h1> No books for the search criteria</h1>
+            <p class="lead"><a href="/buyer"> Try Again? </a> </p>
+          </div>
+     {% endif %}
+
 
          
 

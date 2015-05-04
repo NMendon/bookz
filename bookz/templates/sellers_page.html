@@ -31,19 +31,13 @@
     </nav>
 <div class="container">
 	<div class="container">
-
+    {% if results %}
       <div class="page-header">
         <h1>Welcome!</h1>
         <p class="lead">Below is the list of books you have listed </p>
       </div>
 
-
-
-
-     <!-- <p>Get three equal-width columns <strong>starting at desktops and scaling to large desktops</strong>. On mobile devices, tablets and below, the columns will automatically stack.</p> -->
-
       <h2 class="sub-header">Your Books</h2>
-
           <div class="table-responsive" class="highlight">
             <table  class="table table-hover">
               <thead>
@@ -76,7 +70,12 @@
                </tbody>
             </table>
           </div>   <!-- table div -->
-
+     {% else %}
+        <div class="page-header">
+            <h1>Welcome!</h1>
+        <p class="lead">You do not have any books listed.</p>
+      </div>
+     {% endif %}
       <!--<div class="row">
         <div class="col-md-3"><strong>Book Name</strong></div>
         <div class="col-md-1"><strong>Code</strong></div>
@@ -86,8 +85,6 @@
         <div class="col-md-1"><strong>Edit/Delete</strong></div>
       </div>
     -->
-
-     <hr>
 
     <h3>Click <a href="/seller/add_book">here </a>to add a new listing</h3>
 

@@ -29,7 +29,6 @@ class Book(Base):
     name = Column(String(100), nullable=False)
     author = Column(String(100), nullable=False)
     edition = Column(String(100))
-    comments = Column(String(200))
     # Note the default
     ean = Column(Integer, default=-1)
     def __init__(self, name=None, author=None, edition=None, ean=None, comments=None):

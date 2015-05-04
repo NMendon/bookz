@@ -207,9 +207,9 @@ def add_book():
 
 @app.route('/course/get_courses', methods=['GET'])
 def fetch_courses():
-    oauth_token = session.get('oauth_token')
-    if oauth_token is None:
-        return redirect('authorization/' + session['provider'])
+    # oauth_token = session.get('oauth_token')
+    # if oauth_token is None:
+    #     return redirect('authorization/' + session['provider'])
     courses = []
     with session_scope() as db_session:
         res = db_session.query(Course.id, Course.name, Course.desc)
@@ -222,25 +222,26 @@ def _list_dd_json(res):
 
 @app.route('/course/get_books', methods=["GET"])
 def fetch_course_books():
-    app.logger.info(request)
-    oauth_token = session.get('oauth_token')
-    if oauth_token is None:
-        return redirect('authorization/' + session['provider'])
+    # app.logger.info(request)
+    # oauth_token = session.get('oauth_token')
+    # if oauth_token is None:
+    #     return redirect('authorization/' + session['provider'])
     course = request.args.get('course')
     if not course:
         raise ValueError('Looks like you navigated to this route incorrectly')
     # Now get the books
     results = []
     with session_scope() as db_session:
-       results = dal.get_books_for_course(course)
+        results = dal.get_books_for_course(course)
+    _LOGGER.info("Results: %s " % results)
     return json.dumps(_list_dd_json(results))
 
 @app.route('/course/get_author', methods=["GET"])
 def fetch_author_for_course_book():
-    app.logger.info(request)
-    oauth_token = session.get('oauth_token')
-    if oauth_token is None:
-        return redirect('authorization/' + session['provider'])
+    # app.logger.info(request)
+    # oauth_token = session.get('oauth_token')
+    # if oauth_token is None:
+    #     return redirect('authorization/' + session['provider'])
     course = request.args.get('course')
     book = request.args.get('book')
     if not course or not book:
@@ -252,10 +253,10 @@ def fetch_author_for_course_book():
 
 @app.route('/course/get_edition', methods=["GET"])
 def fetch_editions_for_course_book_author():
-    app.logger.info(request)
-    oauth_token = session.get('oauth_token')
-    if oauth_token is None:
-        return redirect('authorization/' + session['provider'])
+    # app.logger.info(request)
+    # oauth_token = session.get('oauth_token')
+    # if oauth_token is None:
+    #     return redirect('authorization/' + session['provider'])
     course = request.args.get('course')
     book = request.args.get('book')
     author = request.args.get('author')
