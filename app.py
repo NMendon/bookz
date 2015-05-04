@@ -1,5 +1,5 @@
-from bookz.utils.forms import BookForm
-from flask import Flask, request, render_template, session, redirect, flash
+from bookz.utils.forms import BookForm, BuyerForm
+from flask import Flask, request, render_template, session, redirect, flash, url_for
 from requests_oauthlib import OAuth2Session
 import requests
 import datetime as dt
@@ -21,6 +21,45 @@ _LOGGER = logging.getLogger(__name__)
 def login():
     return render_template('index.html')
 
+@app.route("/logout")
+def logout():
+    session["__invalidate__"] = True
+    return redirect("/")
+
+@app.after_request
+def remove_if_invalid(response):
+    if "__invalidate__" in session:
+        response.delete_cookie(app.session_cookie_name)
+        if 'oauth_token' in session:
+            session.pop('oauth_token')
+        session.pop("__invalidate__")
+    return response
+
+@app.route('/buyer', methods=['GET', 'POST'])
+def buyer():
+    if request.method == 'GET':
+        provider = session.get('provider', None)
+        _LOGGER.info("Provider: %s" % provider)
+        return render_template('buyer.html', provider=provider)
+    if request.method == 'POST':
+        if not request.form:
+            raise ValueError("Expected a form in the request")
+        form = BuyerForm(request.form)
+        if form.validate():
+            res = dal.get_search_results_for_data(
+                int(form.course.data), form.book.data, form.author.data, form.edition.data)
+            _LOGGER.info("** results %s " % res)
+            # If the buyer is also logged in as a seller
+            provider = session.get('provider', None)
+            _LOGGER.info("Provider: %s" % provider)
+            return render_template('buyer_search.html', results=res, provider=provider)
+        else:
+            _LOGGER.warn("Errors: %s " % form.errors)
+            # Get the data for the given information in the form
+            provider = session.get('provider', None)
+            _LOGGER.info("Provider: %s" % provider)
+            return render_template(
+                'buyer.html', form=form, form_errors=form.errors, provider=provider)
 
 @app.route('/shutdown', methods=['POST'])
 def shutdown():
@@ -146,13 +185,12 @@ def add_book():
         form = BookForm(request.form)
         if form.validate():
             with session_scope() as db_session:
-                cbid = db_session.query(CourseBook.id) \
-                    .filter(CourseBook.course_id==int(form.course.data)) \
-                    .filter(CourseBook.book_id==int(form.book.data)).all()
-                if cbid and cbid[0]:
+                cbid = dal.get_course_book_id_by_course_book_name(
+                    int(form.course.data), form.book.data, form.author.data, form.edition.data)
+                if cbid:
                     post = Post(
                         seller_id=session.get('seller_id'),
-                        course_book_id=cbid[0][0], comments=form.comments.data, price=form.price.data,
+                        course_book_id=cbid.pop(), comments=form.comments.data, price=form.price.data,
                         created_date=dt.datetime.utcnow(), last_modified_date=dt.datetime.utcnow())
                     db_session.add(post)
                 else:
@@ -166,44 +204,66 @@ def add_book():
     elif request.method == "GET":
         return render_template('add_book.html')
 
-@app.route('/courses/get_courses', methods=['GET'])
+@app.route('/course/get_courses', methods=['GET'])
 def fetch_courses():
     oauth_token = session.get('oauth_token')
     if oauth_token is None:
         return redirect('authorization/' + session['provider'])
-    if not session.get('courses', None):
-        courses = []
-        with session_scope() as db_session:
-            res = db_session.query(Course.id, Course.name, Course.desc)
-            for _id, name, desc in res:
-                courses.append({"id": _id, "name": name, "desc": desc})
-        session['courses'] = courses
-    return json.dumps(session.get('courses'))
+    courses = []
+    with session_scope() as db_session:
+        res = db_session.query(Course.id, Course.name, Course.desc)
+        for _id, name, desc in res:
+            courses.append({"value": _id, "label": name, "desc": desc})
+    return json.dumps(courses)
 
-@app.route('/courses/get_books', methods=["GET"])
+def _list_dd_json(res):
+  return   [{'label': r, 'value': r} for r in res]
+
+@app.route('/course/get_books', methods=["GET"])
 def fetch_course_books():
     app.logger.info(request)
     oauth_token = session.get('oauth_token')
     if oauth_token is None:
         return redirect('authorization/' + session['provider'])
-    if not session.get('courses', None):
-        raise ValueError('Looks like you navigated to this route before calling /seller/add_book')
+    course = request.args.get('course')
+    if not course:
+        raise ValueError('Looks like you navigated to this route incorrectly')
     # Now get the books
     results = []
     with session_scope() as db_session:
-        res = db_session.query(
-            Book.id, Book.name, Book.author, Book.ean, Book.edition).join(
-                CourseBook).filter(CourseBook.course_id == request.args.get('course')).all()
-        for book_id, name, author, ean, edition in res:
-            results.append({
-                "id": book_id,
-                "name": name,
-                "author": author,
-                "ean": ean,
-                "edition": edition
-            })
+       results = dal.get_books_for_course(course)
+    return json.dumps(_list_dd_json(results))
 
-    return json.dumps(results)
+@app.route('/course/get_author', methods=["GET"])
+def fetch_author_for_course_book():
+    app.logger.info(request)
+    oauth_token = session.get('oauth_token')
+    if oauth_token is None:
+        return redirect('authorization/' + session['provider'])
+    course = request.args.get('course')
+    book = request.args.get('book')
+    if not course or not book:
+        _LOGGER.warn('Looks like you navigated to this route incorrectly')
+        return ''
+    with session_scope() as db_session:
+        results = dal.get_author_for_course_id_book_name(course, book)
+    return json.dumps(_list_dd_json(results))
+
+@app.route('/course/get_edition', methods=["GET"])
+def fetch_editions_for_course_book_author():
+    app.logger.info(request)
+    oauth_token = session.get('oauth_token')
+    if oauth_token is None:
+        return redirect('authorization/' + session['provider'])
+    course = request.args.get('course')
+    book = request.args.get('book')
+    author = request.args.get('author')
+    if not course or not book:
+        _LOGGER.warn('Looks like you navigated to this route incorrectly')
+        return ''
+    with session_scope() as db_session:
+        results = dal.get_edition_for_course_id_book_name_author_name(course, book, author)
+    return json.dumps(_list_dd_json(results))
 
 @app.route('/seller_page/delete_post/<post_id>', methods=["GET", "POST"])
 def delete_post(post_id):

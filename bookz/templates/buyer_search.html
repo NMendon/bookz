@@ -2,8 +2,9 @@
 {% block title %}Index{% endblock %}
 {% block head %}
     {{ super() }}
-    <link href="{{ url_for('static', filename='css/login.css') }}" rel="stylesheet">
-
+        <script src="{{ url_for('static', filename='js/book_dropdown.js') }}"></script>
+        <script src="{{ url_for(
+        'static', filename='components/jquery-cascading-dropdown/dist/jquery.cascadingdropdown.js') }}"></script>
 {% endblock %}
 {% block content %}
     <!-- Static navbar -->
@@ -20,47 +21,34 @@
         <div id="navbar" class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
             <li class="navbar-brand">Bookz</li>
-            <li><a href="/buyer">Buy a book instead?</a></li>
-          </ul>
-          <ul class="nav navbar-nav navbar-right">
-            <li class="navbar-brand">{{ "Welcome "+ user_info['name']+"!"}}</li>
-            <li> <a href="/logout">Logout</a></li>
+            <li><a href="{{ ('seller_page/'+ provider) if provider else '/' }}">Sell a book instead?</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
     </nav>
-<div class="container">
-	<div class="container">
+    <div class="container">
 
       <div class="page-header">
-        <h1>Welcome!</h1>
-        <p class="lead">Below is the list of books you have listed (if any)</p>
+        <h1>Books you can buy!</h1>
+        <p class="lead">You can contact the seller for any of the books listed below</p>
       </div>
 
-
-
-
-     <!-- <p>Get three equal-width columns <strong>starting at desktops and scaling to large desktops</strong>. On mobile devices, tablets and below, the columns will automatically stack.</p> -->
-
-      <h2 class="sub-header">Your Books</h2>
 
           <div class="table-responsive" class="highlight">
             <table  class="table table-hover">
               <thead>
                 <tr class="success">
-                  <!--th>#</th-->
                   <th>Book Description</th>
                   <th>Author</th>
                   <th>Edition</th>
                   <th>Class Code</th>
                   <th>Price</th>
-                  <th>Last Modified</th>
-                  <th>Edit</th>
-                  <th>Delete</th>
+                  <th>Last Modified Date</th>
+                  <th>Contact</th>
                 </tr>
               </thead>
               <tbody>
-              {% for row in results %}
+                 {% for row in results %}
                 <tr>
                   <!-- row id here-->
                   <td>{{ row['book_name']}}</td>
@@ -69,12 +57,14 @@
                   <td>{{ row['course_name']}}</td>
                   <td>{{ row['price']|round(precision=2)}}</td>
                   <td>{{ row['last_modified_date']}} </td>
-                  <td><a href="/seller_page/edit_post/{{ row['post_id'] }}">Edit </a></td>
-                  <td><a href="/seller_page/delete_post/{{ row['post_id'] }}">Delete </a></td>
+                  <td> <a href="https://mail.google.com/mail/?view=cm&fs=1&to={{ row['email'] }}
+                    &su=Baruch Online Books - Listing for {{ row['book_name'] }}
+                    &body=Hi, I'd like to connect with you to get this book. Let me know a good time and place to meet up" target="_blank">Contact</a>
+                  </td>
                 </tr>
               {% endfor %}
                </tbody>
-            </table>
+            </table>  
           </div>   <!-- table div -->
 
       <!--<div class="row">
@@ -86,16 +76,11 @@
         <div class="col-md-1"><strong>Edit/Delete</strong></div>
       </div>
     -->
-
+     
      <hr>
 
-    <h3>Click <a href="/seller/add_book">here </a>to add a new listing</h3>
+         
 
-
+      
     </div> <!-- /container -->
-
-
-    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
-    <script src="../../assets/js/ie10-viewport-bug-workaround.js"></script>
-</div>
 {% endblock %}

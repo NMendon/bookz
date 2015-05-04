@@ -1,0 +1,8 @@
+{% macro has_error(key) -%}
+    {% if form_errors is defined and key in form_errors %} has-error {% endif %}
+{%- endmacro %}
+{% macro display_error(key) -%}
+    {% if form_errors is defined and key in form_errors %}
+        <label class="control-label" for="{{ key }}">{{ form_errors[key]|join('\n') }} </label>
+    {% endif %}
+{%- endmacro %}

@@ -2,18 +2,36 @@
 {% block title %}Index{% endblock %}
 {% block head %}
     {{ super() }}
-    <link href="{{ url_for('static', filename='css/login.css') }}" rel="stylesheet">
-    <script src="{{ url_for('static', filename='js/book_dropdown.js') }}"></script>
-    <script src="{{ url_for(
+        <script src="{{ url_for('static', filename='js/book_dropdown.js') }}"></script>
+        <script src="{{ url_for(
         'static', filename='components/jquery-cascading-dropdown/dist/jquery.cascadingdropdown.js') }}"></script>
 {% endblock %}
 {% block content %}
+    <nav class="navbar navbar-default navbar-static-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="navbar-brand">Bookz</li>
+            <li><a href="{{ ('seller_page/'+ provider) if provider else '/' }}">Sell a book instead?</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+    <div class="container">
      {% from 'forms.html' import has_error, display_error with context%}
-     <form class="form-horizontal" role="form", id="dd" action="" method="post">
+     <form class="form-horizontal" role="form", id="dd" action="/buyer" method="post">
 
-        <h2>Add a New Post</h2>
-        <p> Enter the below details and then click on submit </p>
-
+        <h2>Buy a Book</h2>
+        <!-- <p> Enter the below detais and then click on Search </p> -->
+        
         <hr>
 
       <!-- Course ID -->
@@ -22,12 +40,12 @@
            <div class="col-sm-2 {{ has_error('course') }} }">
                {{ display_error('course') }}
                 <select id="course" class="form-control course" name="course">
-                    <option value>Select</option>
+                    <option value=''>Select</option>
                 </select>
            </div>
          </div>
 
-      <!-- Book Name  -->
+        <!-- Book Name  -->
          <div class="form-group">
               <label class="control-label col-sm-2">Book Name: </label>
            <div class="col-sm-7 {{ has_error('book') }}">
@@ -63,30 +81,11 @@
          </div>
 
          <div class="form-group">
-              <label class="control-label col-sm-2">Price (in $): </label>
-           <div class="col-sm-2 {{ has_error('price') }}">
-               {{ display_error('price') }}
-              <input type="number" class="form-control" id="price" placeholder="0.00" name="price" step="any" min="0">
+              
+           <div class="col-sm-offset-4 col-sm-2">  
+              <button type="submit" class="btn" value="SearchBook">Search</button>
            </div>
-         </div>
-
-
-         <div class="form-group">
-              <label class="control-label col-sm-2">Comments: </label>
-           <div class="col-sm-5">
-              <textarea class="form-control" rows="4" id="comment"></textarea>
-           </div>
-         </div>
-
-
-         <div class="form-group">
-
-           <div class="col-sm-offset-4 col-sm-2">
-              <button type="submit" class="btn" value=Book>Submit</button>
-           </div>
-         </div>
-
-
+         </div>  
       </form>
-
+    </div> <!-- /container -->
 {% endblock %}
