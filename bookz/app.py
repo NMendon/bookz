@@ -1,4 +1,6 @@
+bookz/utils/logging_utils.pyfrom logging.handlers import WatchedFileHandler
 from bookz.utils.forms import BookForm, BuyerForm
+from bookz.utils import logging_utils
 from flask import Flask, request, render_template, session, redirect, flash, url_for
 from requests_oauthlib import OAuth2Session
 import requests
@@ -9,12 +11,11 @@ from bookz.model import session_scope
 from bookz.model.model import Book, Course, CourseBook, Post, Seller
 from bookz.model import dal
 
-app = Flask(__name__, template_folder='bookz/templates', static_folder="bookz/static")
+app = Flask(__name__, template_folder='templates', static_folder="static")
 import os
 import json
 
-import logging
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = None
 
 
 @app.route('/')
@@ -333,33 +334,28 @@ def edit_post(post_id):
         # TODO: display an error message instead?
         return redirect('seller_page/' + session['provider'])
 
-
 ######## Utility methods to start stop a server ###########
 # Also the main tox entry point. Make sure you export these incase you are gonna start things from the outside
-def start_server():
-
+def configure_server():
     #### TODO: Remove these once you have SSL set up###
     os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
     os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = 'True'
     #### Remove the above when SSL is set up####
 
-    ### TODO: Abstract this ugliness using some injection mechanism
+    ### TODO: Abstract some of this ugliness using some injection mechanism
     app.config.from_envvar("APP_CONFIG_FILE")
-    # TODO: Use google's secret key.. for now..
+    # TODO: Use generic secret key. Use google's secret key.. for now..
     oauth_config = oauth_utils.get_oauth_config_wrapper(app, "google")
     app.secret_key = oauth_config.client_secret
     app.config['SECRET_KEY']  = oauth_config.client_secret
     app.config['SESSION_TYPE'] = 'filesystem'
-    # Set up logging based on what was set
-    import logging
-    from bookz.utils import logging_utils as lu
-    #if app.config['LOGGING_CONFIG_FILE']:
-    #    lu.setup_logging(app.config['LOGGING_CONFIG_FILE'])
+    app.debug = True if app.config['DEBUG'] == 'True' else False
+    # Set up some logging...
+    logging_utils.setup_logging(app)
     global _LOGGER
     _LOGGER = app.logger
-    #else:
-    #    raise ValueError("Did not find LOGGING_CONFIG_FILE in the app config")
-    app.run(debug=True if app.config['DEBUG'] == 'True' else False)
+    print 'Starting the app server'
+    return app
 
 # TODO: get the server port and append it instead of hardcoding it...
 def stop_server():
@@ -368,6 +364,3 @@ def stop_server():
             'http://127.0.0.1:5000/shutdown')
     except requests.exceptions.ConnectionError as e:
         print 'Not detecting a started server..'
-
-if '__main__' in __name__:
-    start_server()
