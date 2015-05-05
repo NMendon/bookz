@@ -21,16 +21,19 @@ RUN apt-get install -y tar git curl nano wget dialog net-tools build-essential
 # Install Python and Basic Python Tools
 RUN apt-get install -y python python-dev python-distribute python-pip
 
-RUN git clone git@github.com:NMendon/bookz.git /bookz/
+RUN mkdir /bookz/
+
+# If SSH access needs to be granted to private repos
+# we need to use the ADD command.
+RUN git clone https://github.com/NMendon/bookz.git /bookz/
+RUN cd /bookz/
 
 RUN pip install -r /bookz/requirements.txt
 
 RUN mkdir -p /var/log/bookz/
 
-EXPOSE 6000
-
-RUN cd /bookz/
-
 RUN . bin/activate
 
-RUN gunicorn --reload --log-level INFO --log-file /var/log/bookz/gunicorn.log --error-logfile /var/log/bookz/gunicorn.error.log  -b 127.0.0.1:5000 app:app
+EXPOSE 6000
+
+CMD gunicorn --reload --log-level INFO --log-file /var/log/bookz/gunicorn.log --error-logfile /var/log/bookz/gunicorn.error.log  -b 127.0.0.1:6000 wsgi:app

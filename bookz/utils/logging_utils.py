@@ -10,5 +10,4 @@ def setup_logging(app):
     app.logger.addHandler(file_handler)
     global_config = yaml.load(file(
         'bookz/config/logging_prod.yml') if app.config['DEBUG'] == 'False' else file('bookz/config/logging_dev.yml'))
-    print global_config
     logging.config.dictConfig(global_config['logging'])

@@ -1,4 +1,4 @@
-bookz/utils/logging_utils.pyfrom logging.handlers import WatchedFileHandler
+from logging.handlers import WatchedFileHandler
 from bookz.utils.forms import BookForm, BuyerForm
 from bookz.utils import logging_utils
 from flask import Flask, request, render_template, session, redirect, flash, url_for
