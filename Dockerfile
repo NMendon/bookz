@@ -39,5 +39,5 @@ WORKDIR /bookz
 
 ENV APP_CONFIG_FILE config/prod
 ENTRYPOINT ["gunicorn"]
-CMD ["--log-level INFO", "-b 127.0.0.1:6000", "wsgi:app"]
+CMD ["-b 127.0.0.1:6000", "wsgi:app"]
 #CMD ["--log-level INFO", "--log-file /var/log/bookz/gunicorn.log", "--error-logfile /var/log/bookz/gunicorn.error.log",  "-b 127.0.0.1:6000", "wsgi:app"]
