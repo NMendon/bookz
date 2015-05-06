@@ -25,15 +25,19 @@ RUN mkdir /bookz/
 
 # If SSH access needs to be granted to private repos
 # we need to use the ADD command.
-RUN git clone https://github.com/NMendon/bookz.git /bookz/
+#git clone https://github.com/NMendon/bookz.git /bookz/
+# For this we need another script to git clone the dir on the machine..
+ADD . /bookz/
 RUN cd /bookz/
 
 RUN pip install -r /bookz/requirements.txt
 
 RUN mkdir -p /var/log/bookz/
 
-RUN . bin/activate
-
 EXPOSE 6000
+WORKDIR /bookz
 
-CMD gunicorn --reload --log-level INFO --log-file /var/log/bookz/gunicorn.log --error-logfile /var/log/bookz/gunicorn.error.log  -b 127.0.0.1:6000 wsgi:app
+ENV APP_CONFIG_FILE config/prod
+ENTRYPOINT ["gunicorn"]
+CMD ["--log-level INFO", "-b 127.0.0.1:6000", "wsgi:app"]
+#CMD ["--log-level INFO", "--log-file /var/log/bookz/gunicorn.log", "--error-logfile /var/log/bookz/gunicorn.error.log",  "-b 127.0.0.1:6000", "wsgi:app"]

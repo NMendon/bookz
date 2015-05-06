@@ -86,7 +86,7 @@ def authorization(provider):
         # force to always make user click authorize
         access_type="online")
     # State is used to prevent CSRF, keep this for later.
-    app.logger.debug("Redirect URI: "+authorization_url)
+    _LOGGER.debug("Redirect URI: %s ", authorization_url)
     session['oauth_state'] = state
     return redirect(authorization_url)
 
@@ -352,9 +352,9 @@ def configure_server():
     app.config['SESSION_TYPE'] = 'filesystem'
     app.debug = True if app.config['DEBUG'] == 'True' else False
     # Set up some logging...
-    logging_utils.setup_logging(app)
     global _LOGGER
     _LOGGER = app.logger
+    logging_utils.setup_logging(app)
     print 'Starting the app server'
     return app
 
