@@ -1,0 +1,10 @@
+web:
+  build: .
+  command: gunicorn -b 0.0.0.0:6000 --log-file /var/log/bookz/gunicorn.log --error-logfile /var/log/bookz/gunicorn.error.log --log-level INFO  wsgi:app
+  ports:
+   - "6000:6000"
+  volumes:
+   - .:/bookz
+   - ~/opt/bookz/oauth.json:/root/opt/bookz/oauth.json
+   - /var/log/bookz:/var/log/bookz
+
