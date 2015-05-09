@@ -10,10 +10,15 @@
 {% block content %}
 <div class="container">
     <div class="jumbotron row" style="padding-top: 0px;padding-bottom: 0px">
+        <div class="col-md-7">
             <h2>Baruch Online Textbook Bulletin Board</h2>
             <p> Buy and sell books online with your peers</p>
+            </div>
+        <div class="col-md-offset-8"  style="padding-top: 10px;">
+            <img src="{{ url_for('static', filename='images/Baruch_logo320px.png') }}" class="img-responsive" alt="Responsive image">
+        </div>
     </div>
-	<div class="row">
+	<div class="row col-md-offset-4">
 		<form class="form-signin mg-btm col-md-6" >
     	<h3 class="heading-desc col-md-offset-2"> Want to Sell a Book?</h3>
 		<div class="social-box">
@@ -40,6 +45,7 @@
 
 		</div>
       </form>
+
 	</div>
 </div>
 {% endblock %}
