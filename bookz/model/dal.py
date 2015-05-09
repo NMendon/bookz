@@ -22,17 +22,40 @@ def post_from_course_book_id(
                 course_book_id=course_book_id[0][0], comments=comments, price=price)
 
 
-def deactivate_post_from_id(post_id, seller_id):
+def deactivate_post_from_id(post_id, seller_id, status='D'):
     """
     Deactivate a post based on the post and its seller.
     """
     with session_scope() as db_session:
         db_session.query(Post).filter(Post.id==post_id, Post.seller_id==seller_id).update({
-            Post.status: 'D'})
+            Post.status: status})
 
 
-def get_posts_by_seller_id():
-    pass
+def get_posts_by_seller_id(seller_id, active=set('A')):
+    """
+    Returns the seller's posts(only returns the active ones by default.
+    """
+    results = []
+    with session_scope() as db_session:
+        res = db_session.query(Post.id,  Course.name, Book.name, Book.author, Book.edition, Post.price, Post.comments,
+                               Post.last_modified_date). \
+            join(CourseBook, Post.course_book_id == CourseBook.id). \
+            join(Course, Course.id == CourseBook.course_id). \
+            join(Book, Book.id == CourseBook.book_id). \
+            filter(Post.seller_id == seller_id). \
+            filter(Post.status == 'A').all()
+        for post_id, course_name, book_name, author, edition, price, comments, lmd in res:
+            results.append({
+                'post_id': post_id,
+                'book_name': book_name,
+                'author': author,
+                'edition': edition,
+                'course_name': course_name,
+                'price': price,
+                'comments': comments,
+                'last_modified_date': lmd.strftime('%m/%d/%Y')
+            })
+    return results
 
 
 def update_post_from_id(post_id, seller_id, price, book_id, course_id, comments=None):
@@ -113,7 +136,7 @@ def get_search_results_for_data(course_id, book_name, author_name, edition):
     with session_scope() as db_session:
         query_builder = db_session.query(
                 CourseBook.id, Book.name.label('book_name'), Book.author, Book.edition,
-                Course.name.label('course_name'), Post.price, Post.last_modified_date,
+                Course.name.label('course_name'), Post.price, Post.comments, Post.last_modified_date,
                 Seller.email).\
             join(Post, Post.course_book_id == CourseBook.id).\
             join(Seller, Seller.id == Post.seller_id).\
@@ -135,6 +158,7 @@ def get_search_results_for_data(course_id, book_name, author_name, edition):
                 'edition': r.edition,
                 'course_name': r.course_name,
                 'price': r.price,
+                'comments': r.comments,
                 'last_modified_date': r.last_modified_date.strftime('%m/%d/%Y'),
                 'email': r.email
             })

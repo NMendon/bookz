@@ -1,6 +1,6 @@
 import os
 ENV='prod'
-DEBUG=False
+DEBUG='False'
 AUTH_JSON=os.path.join(os.environ.get('HOME'),'opt/bookz/oauth.json')
 ADMINS = ['itissid@gmail.com', 'mendon.namrata@gmail.com']
 LOGGING_CONFIG_FILE='bookz/config/logging_prod.yml'

@@ -1,5 +1,5 @@
 from logging.handlers import WatchedFileHandler
-from bookz.utils.forms import BookForm, BuyerForm
+from bookz.utils.forms import BookForm, BuyerForm, DeletePostConfirmation
 from bookz.utils import logging_utils
 from flask import Flask, request, render_template, session, redirect, flash, url_for
 from requests_oauthlib import OAuth2Session
@@ -115,6 +115,7 @@ def sellers_page(provider):
     # If we already have the access token we can fetch resources.
     # This means step 3 of the 3 legged oauth handshake was completed.
     # We attempt to display the sellers page with his information
+    # TODO: validate that the provider is in the list of valid providers as well
     oauth_config = oauth_utils.get_oauth_config_wrapper(app, provider=provider)
     oauth_token = session.get('oauth_token')
     if oauth_token is None:
@@ -128,12 +129,9 @@ def sellers_page(provider):
         google = OAuth2Session(
             client_id=oauth_config.client_id, token=oauth_token)
         user_info_response = google.get(oauth_config.user_info_uri)
-    except:
-        session['oauth_token'] = google.refresh_token(
-            oauth_config.authorization_base_url, client_id=oauth_config.client_id,
-            client_secret=oauth_config.client_secret)
-        google = OAuth2Session(oauth_config.client_id, token=oauth_token)
-        user_info_response = google.get(oauth_config.user_info_uri)
+    except Exception as e:
+        _LOGGER.info(e)
+        return redirect('/authorization/' + provider)
     user_info=user_info_response.json()
 
     seller_id = None
@@ -151,25 +149,7 @@ def sellers_page(provider):
             seller_id = that_user.id
 
     session['seller_id'] = seller_id
-    results = []
-    with session_scope() as db_session:
-        res = db_session.query(Post.id,  Course.name, Book.name, Book.author, Book.edition, Post.price, Post.last_modified_date).\
-            join(CourseBook, Post.course_book_id==CourseBook.id).\
-            join(Course, Course.id==CourseBook.course_id).\
-            join(Book, Book.id==CourseBook.book_id).\
-            filter(Post.seller_id==seller_id).\
-            filter(Post.status == 'A').all()
-        for post_id, course_name, book_name, author, edition, price, lmd in res:
-            results.append({
-                'post_id': post_id,
-                'book_name': book_name,
-                'author': author,
-                'edition': edition,
-                'course_name': course_name,
-                'price': price,
-                'last_modified_date': lmd.strftime('%m/%d/%Y')
-            })
-
+    results = dal.get_posts_by_seller_id(seller_id)
     return render_template(
         'sellers_page.html', user_info=user_info, results=results, provider=provider)
 
@@ -212,7 +192,8 @@ def fetch_courses():
     #     return redirect('authorization/' + session['provider'])
     courses = []
     with session_scope() as db_session:
-        res = db_session.query(Course.id, Course.name, Course.desc)
+        res = db_session.query(Course.id, Course.name, Course.desc).all()
+        _LOGGER.debug("Courses: %s " % res)
         for _id, name, desc in res:
             courses.append({"value": _id, "label": name, "desc": desc})
     return json.dumps(courses)
@@ -267,13 +248,27 @@ def fetch_editions_for_course_book_author():
         results = dal.get_edition_for_course_id_book_name_author_name(course, book, author)
     return json.dumps(_list_dd_json(results))
 
-@app.route('/seller_page/delete_post/<post_id>', methods=["GET", "POST"])
+_form_reason_map = {
+    1: 'S',
+    2: 'R',
+    3: 'E'
+}
+@app.route('/seller_page/delete_post/<post_id>', methods=["POST"])
 def delete_post(post_id):
     oauth_token = session.get('oauth_token')
     seller_id = session.get('seller_id', None)
     if oauth_token is None or not seller_id:
         return redirect('authorization/' + session['provider'])
-    dal.deactivate_post_from_id(post_id, seller_id)
+    if not request.form:
+        raise ValueError("Expect a form")
+    form = DeletePostConfirmation(request.form)
+    if not form.validate():
+        flash('%s' % '\n'.join(form.errors['reason']))
+        redirect('seller_page/'+session['provider'])
+    else:
+        dal.deactivate_post_from_id(
+            post_id, seller_id,
+            _form_reason_map[int(form.reason.data)])
     return redirect('seller_page/' + session['provider'])
 
 @app.route('/seller_page/edit_post/<post_id>', methods=["GET", "POST"])

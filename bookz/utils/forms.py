@@ -12,6 +12,7 @@ class BookForm(Form):
     comments = StringField('Comments', [validators.Length(max=150)])
     ean = StringField("ean")
 
+
 class BuyerForm(Form):
     course = StringField('Course ID', [validators.DataRequired()])
     book = StringField('Book Name')
@@ -20,3 +21,7 @@ class BuyerForm(Form):
     price = DecimalField('Price')
     comments = StringField('Comments', [validators.Length(max=150)])
     ean = StringField("ean")
+
+
+class DeletePostConfirmation(Form):
+    reason = IntegerField('Reason', [validators.AnyOf([1, 2, 3]), validators.DataRequired()])
