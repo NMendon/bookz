@@ -7,4 +7,4 @@ web:
    - .:/bookz
    - ~/opt/bookz/oauth.json:/root/opt/bookz/oauth.json
    - /var/log/bookz:/var/log/bookz
-
+   - /tmp/test.db:/tmp/test.db
